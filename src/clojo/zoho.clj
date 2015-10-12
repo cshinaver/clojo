@@ -2,14 +2,12 @@
     (:require [clj-http.client :as client]
               [clojure.data.json :as json]
               [cheshire.core :refer :all]
-              )
-  )
+              ))
 
 (defn generate-authentication-token
   [email_id password]
   (defn extract-auth-token [s]
-    (last (re-find #"AUTHTOKEN=([^\n]*)" s))
-    )
+    (last (re-find #"AUTHTOKEN=([^\n]*)" s)))
   (let [
         post-url "https://accounts.zoho.com/apiauthtoken/nb/create"
         scope "Zohopeople/peopleapi"
@@ -38,9 +36,7 @@
     (-> content; decode response
         :body
         :response
-        :result
-        )
-    ))
+        :result)))
 
 (defn get-timesheets
   [email_id auth_token]
