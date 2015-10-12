@@ -8,7 +8,7 @@
 (defn generate-authentication-token
   [email_id password]
   (defn extract-auth-token [s]
-    (re-find #"AUTHTOKEN=[^\n]*" s)
+    (last (re-find #"AUTHTOKEN=([^\n]*)" s))
     )
   (let [
         post-url "https://accounts.zoho.com/apiauthtoken/nb/create"
