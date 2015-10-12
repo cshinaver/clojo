@@ -20,3 +20,21 @@
                     :SCOPE scope
                     :EMAIL_ID email_id
                     :PASSWORD password}})))))
+
+(defn get-time-logs
+  [auth_token]
+  (let [content (let [
+                      time-log-url (format
+                                     "http://people.zoho.com/people/api/timetracker/gettimelogs?authtoken=%s&fromDate=%s&toDate=%s&billingStatus=%s"
+                                     auth_token ; Auth token
+                                     "2015-10-01" ; fromDate
+                                     "2015-10-12" ; toDate
+                                     "all"; billingStatus
+                                     )
+                      ]
+                  (client/get time-log-url {:as :json}))]
+    (-> content; decode response
+        :body
+        :response
+        )
+    ))
