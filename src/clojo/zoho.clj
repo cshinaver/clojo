@@ -41,3 +41,20 @@
         :result
         )
     ))
+
+(defn get-timesheets
+  [email_id auth_token]
+  (let [content (let [
+                      timesheet-url (format
+                                     "http://people.zoho.com/people/api/timetracker/gettimesheet?authtoken=%s&user=%s&approvalStatus=%s"
+                                     auth_token ; Auth token
+                                     email_id; User
+                                     "all" ; approvalStatus
+                                     )
+                      ]
+                  (client/get timesheet-url {:as :json}))]
+    (-> content; decode response
+        :body
+        :response
+        :result)))
+
