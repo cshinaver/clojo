@@ -56,3 +56,24 @@
         :response
         :result)))
 
+(defn is-log-in-timesheet
+  [timelog timesheet]
+  (defn is-within-date
+    [check-date
+     begin-date
+     end-date]
+    ((fn [ls]
+      (t/within? (t/interval (nth ls 1) (nth ls 2)) (nth ls 0))) ; Check if within range
+     (map (fn [x] (f/parse (f/formatter "yyyy-MM-dd") x)) [check-date begin-date end-date])))
+  (let [work-date (:workDate timelog)
+        begin-date (:fromDate timesheet)
+        end-date (:toDate timesheet)]
+    (is-within-date work-date begin-date end-date)))
+
+(defn get-unsubmitted-hours
+  [from_date to_date email_id auth_token]
+  (let
+    [hour-logs (get-time-logs email_id from_date to_date auth_token)
+     timesheets (get-timesheets email_id auth_token)]
+    (filter (fn [log] (not-any? #(is-log-in-timesheet log %) timesheets)) hour-logs)
+    ))
