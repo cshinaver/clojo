@@ -22,15 +22,15 @@
                     :PASSWORD password}})))))
 
 (defn get-time-logs
-  [email_id auth_token]
+  [email_id from_date to_date auth_token]
   (let [content (let [
                       time-log-url (format
                                      "http://people.zoho.com/people/api/timetracker/gettimelogs?authtoken=%s&user=%s&jobId=%s&fromDate=%s&toDate=%s&billingStatus=%s"
                                      auth_token ; Auth token
                                      email_id; User
                                      "all" ; jobId
-                                     "2015-10-11" ; fromDate
-                                     "2015-10-12" ; toDate
+                                     from_date ; fromDate 2015-10-11
+                                     to_date ; toDate 2015-10-12
                                      "all"; billingStatus
                                      )
                       ]
