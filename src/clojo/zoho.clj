@@ -21,6 +21,17 @@
                     :EMAIL_ID email_id
                     :PASSWORD password}})))))
 
+(defn start-policystat-timer
+  [email_id auth_token]
+  (let [url
+       (format
+         "https://people.zoho.com/people/api/timetracker/timer?authtoken=%s&user=%s&jobName=%s&workDate=%s&timer=start&billingStatus=Billable"
+         auth_token
+         email_id
+         "Software Engineering"
+         (f/unparse (f/formatters :date) (t/now)))]
+    (client/post url)))
+
 (defn get-time-logs
   [email_id from_date to_date auth_token]
   (let [content (let [
