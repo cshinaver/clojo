@@ -36,6 +36,33 @@
       (= status 200) 0 ; Timer started
       :else status)))
 
+(defn stop-policystat-timer
+  ; Returns 0 if timer stopped
+  ; Returns 1 if no timer found
+  ; Returns -1 if unknown status code
+  [email_id auth_token]
+  (defn stop-timer-request [] (let [url
+        (
+         format
+         "https://people.zoho.com/people/api/timetracker/timer?authtoken=%s&timeLogId=%s&timer=stop"
+         auth_token
+         (:timelogId (:result (:response (:body (get-running-timers auth_token))))))]
+    (client/post url {:throw-exceptions false})))
+  (let [status (:status (stop-timer-request))]
+    (cond
+      (= status 400) 1 ; No timer found
+      (= status 200) 0 ; timer stopped
+      :else status))) ; Unknown status code error
+
+
+(defn get-running-timers
+  [auth_token]
+  (let [url (
+             format
+             "http://people.zoho.com/people/api/timetracker/getcurrentlyrunningtimer?authtoken=%s"
+             auth_token)]
+    (client/get url {:as :json})))
+
 (defn get-time-logs
   [email_id from_date to_date auth_token]
   (let [content (let [
