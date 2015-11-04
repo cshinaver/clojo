@@ -117,5 +117,4 @@
   (let
     [hour-logs (get-time-logs email_id from_date to_date auth_token)
      timesheets (get-timesheets email_id auth_token)]
-    (filter (fn [log] (not-any? #(is-log-in-timesheet log %) timesheets)) hour-logs)
-    ))
+    (filter (fn [log] (not-any? #(is-log-in-timesheet log %) timesheets)) hour-logs)))
