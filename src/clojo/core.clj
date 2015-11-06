@@ -51,7 +51,17 @@
         (= arg "--start-timer")
         (let [timer-started-status (zoho/start-policystat-timer email_id auth_token)]
           (if (zero? timer-started-status)
-            (println "Timer started successfully")))))))
+            (println "Timer started successfully")))
+        (= arg "--stop-timer")
+        (let [email_id (:email_id auth_info) auth_token (:auth_token auth_info)]
+          (let
+           [return_status (zoho/stop-policystat-timer email_id auth_token)]
+            (cond
+              (= return_status 0)
+              (println "Timer stopped successfully.")
+              (= return_status 1)
+              (println "No timer found.")
+              :else return_status)))))))
 
 (defn parse-args [args]
   (let [n (count args)]
