@@ -8,8 +8,6 @@
 
 (defn generate-authentication-token
   [email_id password]
-  (defn extract-auth-token [s]
-    (last (re-find #"AUTHTOKEN=([^\n]*)" s)))
   (let [
         post-url "https://accounts.zoho.com/apiauthtoken/nb/create"
         scope "Zohopeople/peopleapi"
@@ -21,9 +19,17 @@
                     :EMAIL_ID email_id
                     :PASSWORD password}})))))
 
+(defn- extract-auth-token [s]
+    (last (re-find #"AUTHTOKEN=([^\n]*)" s)))
+
 (defn start-policystat-timer
   [email_id auth_token]
-  (defn start-timer-request [] (let [url
+  (let [status (:status (start-timer-request))]
+    (cond
+      (= status 200) 0 ; Timer started
+      :else status)))
+
+(defn start-timer-request [] (let [url
        (format
          "https://people.zoho.com/people/api/timetracker/timer?authtoken=%s&user=%s&jobName=%s&workDate=%s&timer=start&billingStatus=Billable"
          auth_token
@@ -31,31 +37,8 @@
          "Software Engineering"
          (f/unparse (f/formatters :date) (t/now)))]
     (client/post url {:as :json})))
-  (let [status (:status (start-timer-request))]
-    (cond
-      (= status 200) 0 ; Timer started
-      :else status)))
 
-(defn stop-policystat-timer
-  ; Returns 0 if timer stopped
-  ; Returns 1 if no timer found
-  ; Returns -1 if unknown status code
-  [email_id auth_token]
-  (defn stop-timer-request [] (let [url
-        (
-         format
-         "https://people.zoho.com/people/api/timetracker/timer?authtoken=%s&timeLogId=%s&timer=stop"
-         auth_token
-         (:timelogId (:result (:response (:body (get-running-timers auth_token))))))]
-    (client/post url {:throw-exceptions false})))
-  (let [status (:status (stop-timer-request))]
-    (cond
-      (= status 400) 1 ; No timer found
-      (= status 200) 0 ; timer stopped
-      :else status))) ; Unknown status code error
-
-
-(defn get-running-timers
+(defn- get-running-timers
   [auth_token]
   (let [url (
              format
@@ -63,7 +46,28 @@
              auth_token)]
     (client/get url {:as :json})))
 
-(defn get-time-logs
+(defn stop-policystat-timer
+  ; Returns 0 if timer stopped
+  ; Returns 1 if no timer found
+  ; Returns -1 if unknown status code
+  [email_id auth_token]
+  (let [status (:status (stop-timer-request))]
+    (cond
+      (= status 400) 1 ; No timer found
+      (= status 200) 0 ; timer stopped
+      :else status))) ; Unknown status code error
+
+(defn- stop-timer-request [] (let [url
+        (
+         format
+         "https://people.zoho.com/people/api/timetracker/timer?authtoken=%s&timeLogId=%s&timer=stop"
+         auth_token
+         (:timelogId (:result (:response (:body (get-running-timers auth_token))))))]
+    (client/post url {:throw-exceptions false})))
+
+
+
+(defn- get-time-logs
   [email_id from_date to_date auth_token]
   (let [content (let [
                       time-log-url (format
@@ -98,21 +102,23 @@
         :response
         :result)))
 
-(defn is-log-in-timesheet
+(defn- is-log-in-timesheet
   [timelog timesheet]
-  (defn is-within-date
+
+  (let [work-date (:workDate timelog)
+        begin-date (:fromDate timesheet)
+        end-date (:toDate timesheet)]
+    (is-within-date work-date begin-date end-date)))
+
+(defn- is-within-date
     [check-date
      begin-date
      end-date]
     ((fn [ls]
       (t/within? (t/interval (nth ls 1) (nth ls 2)) (nth ls 0))) ; Check if within range
      (map (fn [x] (f/parse (f/formatter "yyyy-MM-dd") x)) [check-date begin-date end-date])))
-  (let [work-date (:workDate timelog)
-        begin-date (:fromDate timesheet)
-        end-date (:toDate timesheet)]
-    (is-within-date work-date begin-date end-date)))
 
-(defn get-unsubmitted-hours
+(defn- get-unsubmitted-hours
   [from_date to_date email_id auth_token]
   (let
     [hour-logs (get-time-logs email_id from_date to_date auth_token)
