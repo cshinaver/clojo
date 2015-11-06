@@ -43,7 +43,10 @@
            (let [running-timers (-> content :body :response :result)]
              (if (nil? running-timers)
                (println "No running timers.")
-               (println "There is a running timer"))))
+               (println
+                (format
+                 "There has been a running timer for %.2f minutes"
+                 (float (/ (:diff running-timers) 60)))))))
          (zoho/get-running-timers auth_token))
         (= arg "--start-timer")
         (let [timer-started-status (zoho/start-policystat-timer email_id auth_token)]
