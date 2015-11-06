@@ -35,7 +35,7 @@
       (= status 200) 0 ; Timer started
       :else status)))
 
-(defn- get-running-timers
+(defn get-running-timers
   [auth_token]
   (let [url (format
              "http://people.zoho.com/people/api/timetracker/getcurrentlyrunningtimer?authtoken=%s"
