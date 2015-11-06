@@ -22,19 +22,19 @@
       (spit user-preference-file auth_token)
       auth_token)))
 
-(defn get-auth-token []
+(defn- get-auth-token-from-file []
+  (slurp user-preference-file))
+
+(defn- get-auth-token []
   (if (not (.exists (io/as-file user-preference-file)))
     (generate-new-auth-token)
     (if (nil? (resolve 'auth_token))
       (get-auth-token-from-file)
       "lol")))
 
-(defn- get-auth-token-from-file []
-  (slurp user-preference-file))
-
 (defn- non-trivial-parse-args [arg]
   (cond
-    (= arg "--status") (zoho/get-running-timers)))
+    (= arg "--status") (zoho/get-running-timers (get-auth-token))))
 
 (defn parse-args [args]
   (let [n (count args)]
