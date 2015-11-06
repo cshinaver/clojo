@@ -33,7 +33,13 @@
 
 (defn- non-trivial-parse-args [arg]
   (cond
-    (= arg "--status") (zoho/get-running-timers (get-auth-token))))
+    (= arg "--status")
+    ((fn [content]
+       (let [running-timers (-> content :body :response :status)]
+         (if (= running-timers 0)
+           (println "No running timers.")
+           (println "There is a running timer"))))
+     (zoho/get-running-timers (get-auth-token)))))
 
 (defn parse-args [args]
   (let [n (count args)]
