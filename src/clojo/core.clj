@@ -26,7 +26,7 @@
   (slurp user-preference-file))
 
 (defn- get-auth-token []
-  (if (not (.exists (io/as-file user-preference-file)))
+  (if-not (.exists (io/as-file user-preference-file))
     (generate-new-auth-token)
     (if (nil? (resolve 'auth_token))
       (get-auth-token-from-file)
@@ -39,11 +39,11 @@
 (defn parse-args [args]
   (let [n (count args)]
     (cond
-      (= n 0) (println (str
-                        "usage: java -jar clojo.jar "
-                        "[--status] "
-                        "[--start-timer] "
-                        "[--stop-timer] "))
+      (zero? n) (println (str
+                          "usage: java -jar clojo.jar "
+                          "[--status] "
+                          "[--start-timer] "
+                          "[--stop-timer] "))
       (= n 1) (non-trivial-parse-args (first args))
       :else n)))
 
