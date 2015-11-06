@@ -7,39 +7,48 @@
 
 (def user-preference-file (str (System/getProperty "user.home") "/" ".clojo"))
 
-(defn- generate-new-auth-token []
-  (println "Enter Zoho email address and password")
+(defn- generate-new-auth-token [email password]
+  (println "Generating new authentication token")
   (let
-   [email (read-line) password (read-line)]
-    (println "Generating new authentication token")
-    (let
-     [auth_token (zoho/generate-authentication-token email password)]
-      (if-not (nil? auth_token)
-        (do  (println (str "Auth token " auth_token " generated"))
-             auth_token)
-        (println "Failure in generating auth token")))))
+   [auth_token (zoho/generate-authentication-token email password)]
+    (if-not (nil? auth_token)
+      (do  (println (str "Auth token " auth_token " generated"))
+           auth_token)
+      (println "Failure in generating auth token"))))
 
 (defn- get-auth-token-from-file []
   (slurp user-preference-file))
 
-(defn- get-auth-token []
+(defn- get-auth-info []
   (if-not (.exists (io/as-file user-preference-file))
-    (let [auth_token (generate-new-auth-token)]
-      (println "Authentication token not saved")
-      (println (str "Saving auth token to " user-preference-file))
-      (spit user-preference-file auth_token)
-      auth_token)
-    (slurp user-preference-file)))
+    (do
+      (println "Please enter zoho email and password")
+      (let [email (read-line) password (read-line)]
+        (let [auth_token (generate-new-auth-token email password)]
+          (println "Authentication token not saved")
+          (println (str "Saving auth token to " user-preference-file))
+          (spit user-preference-file email)
+          (spit user-preference-file "\n" :append true)
+          (spit user-preference-file auth_token :append true)
+          {:email_id email :auth_token auth_token})))
+    ((fn [info] {:email_id (first info) :auth_token (second info)})
+     (clojure.string/split-lines (slurp user-preference-file)))))
 
 (defn- non-trivial-parse-args [arg]
-  (cond
-    (= arg "--status")
-    ((fn [content]
-       (let [running-timers (-> content :body :response :status)]
-         (if (= running-timers 0)
-           (println "No running timers.")
-           (println "There is a running timer"))))
-     (zoho/get-running-timers (get-auth-token)))))
+  (let [auth_info (get-auth-info)]
+    (let [email_id (:email_id auth_info) auth_token (:auth_token auth_info)]
+      (cond
+        (= arg "--status")
+        ((fn [content]
+           (let [running-timers (-> content :body :response :result)]
+             (if (nil? running-timers)
+               (println "No running timers.")
+               (println "There is a running timer"))))
+         (zoho/get-running-timers auth_token))
+        (= arg "--start-timer")
+        (let [timer-started-status (zoho/start-policystat-timer email_id auth_token)]
+          (if (zero? timer-started-status)
+            (println "Timer started successfully")))))))
 
 (defn parse-args [args]
   (let [n (count args)]
