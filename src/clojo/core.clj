@@ -56,5 +56,3 @@
   "I don't do a whole lot ... yet."
   [& args]
   (parse-args args))
-
-(get-auth-token)
