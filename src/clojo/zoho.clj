@@ -28,12 +28,11 @@
          (f/unparse (f/formatters :date) (t/now)))]
     (client/post url {:as :json})))
 
+
 (defn start-policystat-timer
   [email_id auth_token]
-  (let [status (:status (start-timer-request email_id auth_token))]
-    (cond
-      (= status 200) 0 ; Timer started
-      :else status)))
+  (let [errors (:errors (:response (:body (start-timer-request email_id auth_token))))]
+    errors))
 
 (defn get-running-timers
   [auth_token]

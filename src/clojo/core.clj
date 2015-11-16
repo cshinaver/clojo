@@ -49,9 +49,11 @@
                  (float (/ (:diff running-timers) 60)))))))
          (zoho/get-running-timers auth_token))
         (= arg "--start-timer")
-        (let [timer-started-status (zoho/start-policystat-timer email_id auth_token)]
-          (if (zero? timer-started-status)
-            (println "Timer started successfully")))
+        (let [timer-started-error (zoho/start-policystat-timer email_id auth_token)]
+          (if (nil? timer-started-error)
+            (println "Timer started successfully")
+            (println (format "Error: %s" (:message timer-started-error)))
+            ))
         (= arg "--stop-timer")
         (let [email_id (:email_id auth_info) auth_token (:auth_token auth_info)]
           (let
