@@ -3,6 +3,7 @@
             [clojure.data.json :as json]
             [clj-time.core :as t]
             [clj-time.format :as f]
+            [clj-time.local :as l]
             [cheshire.core :refer :all]))
 
 (defn- extract-auth-token [s]
@@ -25,7 +26,7 @@
          auth_token
          email_id
          "Software Engineering"
-         (f/unparse (f/formatters :date) (t/now)))]
+         (l/format-local-time (l/local-now) :date))]
     (client/post url {:as :json})))
 
 
