@@ -59,7 +59,7 @@
           (let
            [return_status (zoho/stop-policystat-timer email_id auth_token)]
             (cond
-              (= return_status 0)
+              (zero? return_status)
               (println "Timer stopped successfully.")
               (= return_status 1)
               (println "No timer found.")
