@@ -43,22 +43,17 @@
            (let [running-timers (-> content :body :response :result)]
              (if (nil? running-timers)
                (println "No running timers.")
-               (let [tax-deduction 0.17
-                     hr-rate 18
-                     total-seconds (-> running-timers :diff)
-                     hours (int (/ total-seconds 60 60))
-                     minutes (int (/ (- total-seconds (* hours 60 60)) 60))
-                     seconds (- total-seconds (* hours 60 60) (* minutes 60))]
+               (let [timer-info (clojo.zoho/get-timer-info auth_token)]
                  (println
                   (format
                    "There has been a running timer for %d hours, %d minutes and %d seconds"
-                   hours
-                   minutes
-                   seconds))
+                   (:hours timer-info)
+                   (:minutes timer-info)
+                   (:seconds timer-info)))
                  (println
                   (format
                    "Total money made: $%.2f"
-                   (float (* total-seconds (/ (* hr-rate (- 1 tax-deduction)) 60 60)))))))))
+                   (:current-sum timer-info)))))))
          (zoho/get-running-timers auth_token))
         (= arg "--start-timer")
         (let [timer-started-error (zoho/start-policystat-timer email_id auth_token)]

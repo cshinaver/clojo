@@ -29,18 +29,32 @@
          (l/format-local-time (l/local-now) :date))]
     (client/post url {:as :json})))
 
-
-(defn start-policystat-timer
-  [email_id auth_token]
-  (let [errors (:errors (:response (:body (start-timer-request email_id auth_token))))]
-    errors))
-
 (defn get-running-timers
   [auth_token]
   (let [url (format
              "http://people.zoho.com/people/api/timetracker/getcurrentlyrunningtimer?authtoken=%s"
              auth_token)]
     (client/get url {:as :json})))
+
+(defn get-timer-info [auth_token]
+  ((fn [content]
+    (let [running-timers (-> content :body :response :result)]
+      (if (nil? running-timers)
+        nil
+        (let [tax-deduction 0.17
+              hr-rate 18
+              total-seconds (-> running-timers :diff)
+              hours (int (/ total-seconds 60 60))
+              minutes (int (/ (- total-seconds (* hours 60 60)) 60))
+              seconds (- total-seconds (* hours 60 60) (* minutes 60))
+              current-sum (float (* total-seconds (/ (* hr-rate (- 1 tax-deduction)) 60 60)))]
+          (hash-map :hours hours :minutes minutes :seconds seconds :current-sum current-sum)))))
+   (get-running-timers auth_token)))
+
+(defn start-policystat-timer
+  [email_id auth_token]
+  (let [errors (:errors (:response (:body (start-timer-request email_id auth_token))))]
+    errors))
 
 (defn- stop-timer-request [auth_token]
   (let [url
