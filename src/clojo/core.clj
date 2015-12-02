@@ -19,7 +19,7 @@
 (defn- get-auth-token-from-file []
   (slurp user-preference-file))
 
-(defn- get-auth-info []
+(defn get-auth-info []
   (if-not (.exists (io/as-file user-preference-file))
     (do
       (println "Please enter zoho email and password")
@@ -43,17 +43,22 @@
            (let [running-timers (-> content :body :response :result)]
              (if (nil? running-timers)
                (println "No running timers.")
-               (println
-                (format
-                 "There has been a running timer for %.2f minutes"
-                 (float (/ (:diff running-timers) 60)))))))
+               (let [total-seconds (-> running-timers :diff)
+                     hours (int (/ total-seconds 60 60))
+                     minutes (int (/ (- total-seconds (* hours 60 60)) 60))
+                     seconds (- total-seconds (* hours 60 60) (* minutes 60))]
+                 (println
+                  (format
+                   "There has been a running timer for %d hours, %d minutes and %d seconds"
+                   hours
+                   minutes
+                   seconds))))))
          (zoho/get-running-timers auth_token))
         (= arg "--start-timer")
         (let [timer-started-error (zoho/start-policystat-timer email_id auth_token)]
           (if (nil? timer-started-error)
             (println "Timer started successfully")
-            (println (format "Error: %s" (:message timer-started-error)))
-            ))
+            (println (format "Error: %s" (:message timer-started-error)))))
         (= arg "--stop-timer")
         (let [email_id (:email_id auth_info) auth_token (:auth_token auth_info)]
           (let
