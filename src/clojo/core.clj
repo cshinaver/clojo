@@ -12,27 +12,37 @@
   (let
    [auth_token (zoho/generate-authentication-token email password)]
     (if-not (nil? auth_token)
-      (do  (println (str "Auth token " auth_token " generated"))
+     (do  (println (str "Auth token " auth_token " generated"))
            auth_token)
       (println "Failure in generating auth token"))))
 
 (defn- get-auth-token-from-file []
   (slurp user-preference-file))
 
+(defn- get-auth-from-user []
+  (do
+    (println "Please enter zoho email and password")
+    (let [email (read-line) password (read-line)]
+      (let [auth_token (generate-new-auth-token email password)]
+        (println "Authentication token not saved")
+        (println (str "Saving auth token to " user-preference-file))
+        (spit user-preference-file email)
+        (spit user-preference-file "\n" :append true)
+        (spit user-preference-file auth_token :append true)
+        {:email_id email :auth_token auth_token}))))
+
+(defn- get-auth-from-file []
+  ((fn [info] {:email_id (first info) :auth_token (second info)})
+     (clojure.string/split-lines (slurp user-preference-file))))
+                           
+
 (defn get-auth-info []
-  (if-not (.exists (io/as-file user-preference-file))
-    (do
-      (println "Please enter zoho email and password")
-      (let [email (read-line) password (read-line)]
-        (let [auth_token (generate-new-auth-token email password)]
-          (println "Authentication token not saved")
-          (println (str "Saving auth token to " user-preference-file))
-          (spit user-preference-file email)
-          (spit user-preference-file "\n" :append true)
-          (spit user-preference-file auth_token :append true)
-          {:email_id email :auth_token auth_token})))
-    ((fn [info] {:email_id (first info) :auth_token (second info)})
-     (clojure.string/split-lines (slurp user-preference-file)))))
+  (if (.exists (io/as-file user-preference-file))
+    (let [creds (get-auth-from-file)]
+      (if (nil? (:auth_token creds))
+        (get-auth-from-user)
+        creds))
+    (get-auth-from-user)))
 
 (defn- non-trivial-parse-args [arg]
   (let [auth_info (get-auth-info)]
